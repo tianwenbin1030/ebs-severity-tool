@@ -32,9 +32,6 @@ if (typeof document !== 'undefined') {
     const checklistResetBtn = document.getElementById('checklistResetBtn');
     const similarCard = document.getElementById('similarCard');
     const similarList = document.getElementById('similarList');
-    const photoBtn = document.getElementById('photoBtn');
-    const photoInput = document.getElementById('photoInput');
-    const ocrStatus = document.getElementById('ocrStatus');
 
     // Case library elements
     const caseSearch = document.getElementById('caseSearch');
@@ -464,7 +461,6 @@ if (typeof document !== 'undefined') {
     /* Reset next to "Assess severity": clears the whole assessment flow. */
     function resetAssess() {
       inputEl.value = '';
-      setOcrStatus('', '');
       lastJudged = null;
       resultPanel.classList.add('hidden');
       resultReasons.innerHTML = '';
@@ -872,27 +868,6 @@ if (typeof document !== 'undefined') {
       importCasesFile.value = '';
     });
 
-    /* ---------- Photo OCR (Tesseract.js, loaded on demand) ---------- */
-    let tesseractPromise = null;
-
-    function loadTesseract() {
-      if (tesseractPromise) return tesseractPromise;
-      tesseractPromise = new Promise((resolve, reject) => {
-        if (window.Tesseract) return resolve(window.Tesseract);
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-        s.onload = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error('OCR load failed'));
-        s.onerror = () => reject(new Error('OCR component failed to load \u2014 check network \u7f51\u7edc\u4e0d\u53ef\u7528'));
-        document.head.appendChild(s);
-      });
-      return tesseractPromise;
-    }
-
-    function setOcrStatus(msg, kind) {
-      ocrStatus.textContent = msg || '';
-      ocrStatus.className = 'ocr-status' + (kind ? ' ' + kind : '');
-    }
-
     /* ---------- Events ---------- */
     judgeBtn.addEventListener('click', () => {
       const input = inputEl.value;
@@ -935,32 +910,6 @@ if (typeof document !== 'undefined') {
         status: 'open',
         notes: { en: '', zh: '' }
       });
-    });
-
-    /* ---------- Photo capture / upload → OCR ---------- */
-    photoBtn.addEventListener('click', () => photoInput.click());
-
-    photoInput.addEventListener('change', async () => {
-      const file = photoInput.files[0];
-      if (!file) return;
-      try {
-        const T = await loadTesseract();
-        setOcrStatus('Recognizing... \u8bc6\u522b\u4e2d\uff08\u9996\u6b21\u4f7f\u7528\u9700\u4e0b\u8f7d\u8bc6\u522b\u6a21\u578b\uff0c\u8bf7\u8010\u5fc3\u7b49\u5f85\uff09', 'busy');
-        const worker = await T.createWorker(['eng', 'chi_sim']);
-        const { data } = await worker.recognize(file);
-        await worker.terminate();
-        const text = ((data && data.text) || '').trim();
-        if (text) {
-          inputEl.value = text;
-          setOcrStatus('OCR done \u2014 please review & edit, then assess \u8bc6\u522b\u5b8c\u6210\uff0c\u8bf7\u6838\u5bf9\u540e\u5224\u65ad', 'ok');
-        } else {
-          setOcrStatus('No text recognized \u672a\u80fd\u8bc6\u522b\u5230\u6587\u5b57', 'err');
-        }
-      } catch (e) {
-        setOcrStatus(e.message || 'OCR failed \u8bc6\u522b\u5931\u8d25', 'err');
-      } finally {
-        photoInput.value = '';
-      }
     });
 
     checklistResetBtn.addEventListener('click', resetAssess);
