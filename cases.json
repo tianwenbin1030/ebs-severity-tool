@@ -1,15 +1,4 @@
 {
   "version": 1,
-  "cases": [
-    {
-      "id": "sync-test-001",
-      "title": { "en": "Sync test", "zh": "Sync test" },
-      "description": { "en": "write permission verification", "zh": "write permission verification" },
-      "category": "other",
-      "severity": 4,
-      "date": "2026-08-31",
-      "status": "open",
-      "enteredBy": "deploy-verify"
-    }
-  ]
+  "cases": []
 }
