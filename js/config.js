@@ -16,9 +16,9 @@
  */
 window.APP_CONFIG = window.APP_CONFIG || {};
 window.APP_CONFIG.github = {
-  owner: '',                       // e.g. 'tianwenbin1030'
-  repo: '',                        // e.g. 'aumovio-severity-tool'
+  owner: 'tianwenbin1030',          // GitHub account
+  repo: 'ebs-severity-tool',         // repository hosting this site + case library
   branch: 'main',
-  token: '',                       // fine-grained PAT, Contents: Read & Write, single repo
-  casesPath: 'cases.json'          // path inside the repo to the shared library file
+  token: '',                         // fine-grained PAT, Contents: Read & Write, single repo
+  casesPath: 'cases.json'            // path inside the repo to the shared library file
 };
