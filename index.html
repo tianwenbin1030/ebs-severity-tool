@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>EBS Issue Severity Assessment Tool | EBS问题严重度判断工具</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <h1>EBS Issue Severity Assessment Tool<span class="title-zh">EBS问题严重度判断工具</span></h1>
+      <p>Enter a problem description to get an automatic severity level recommendation. <span class="zh-inline">输入问题描述，自动给出严重度等级建议。</span></p>
+      <nav class="tabs" aria-label="Tabs">
+        <button class="tab-btn active" data-tab="assess">Assess by Symptom <span class="zh-inline">依据表现判断</span></button>
+        <button class="tab-btn" data-tab="standards">Assess by Severity Definition <span class="zh-inline">依据严重度定义判断</span></button>
+        <button class="tab-btn" data-tab="cases">Case Library <span class="zh-inline">案例库</span></button>
+      </nav>
+    </header>
+
+    <!-- ============ Tab: Assess ============ -->
+    <section id="tab-assess" class="tab-panel">
+      <div class="card input-section">
+        <label for="issueInput">Problem description <span class="zh-inline">问题描述</span></label>
+        <textarea id="issueInput" placeholder="Describe the issue: affected system, customer impact, field cases, production disruption, certifications, financial impact, etc.&#10;&#10;描述问题：受影响的系统、客户影响、现场案例、生产中断、认证、财务影响等。&#10;&#10;Tip: you can take a photo of a report / screen and the text will be recognized automatically. 提示：可拍照上传报告或截图，自动识别其中的文字。"></textarea>
+        <div class="photo-row">
+          <input type="file" id="photoInput" accept="image/*" capture="environment" hidden />
+          <button type="button" id="photoBtn" class="btn btn-secondary btn-sm">Take photo / upload <span class="zh-inline">拍照 / 上传图片</span></button>
+          <span id="ocrStatus" class="ocr-status"></span>
+        </div>
+        <div class="actions">
+          <button id="judgeBtn" class="btn btn-primary">Assess severity <span class="zh-inline">判断严重度</span></button>
+          <button id="checklistResetBtn" class="btn btn-secondary">Reset <span class="zh-inline">重置</span></button>
+        </div>
+      </div>
+
+      <section id="resultPanel" class="result-panel hidden">
+        <div class="result-header">
+          <span id="resultLevel" class="result-level"></span>
+          <span id="resultTitle" class="result-title"></span>
+        </div>
+        <div id="resultReasons"></div>
+        <button id="saveAsCaseBtn" class="btn btn-secondary btn-sm save-case-btn hidden">Save as approved case <span class="zh-inline">存为已确认案例</span></button>
+      </section>
+
+      <div class="card" id="checklistCard">
+        <div class="card-head">
+          <h2>Judgment checklist <span class="zh-inline">判定清单</span></h2>
+          <span class="card-sub">Integrated from P0207624 tC Case Management &amp; tool criteria <span class="zh-inline">整合自 P0207624 tC 案例管理 与工具标准</span></span>
+        </div>
+        <p class="checklist-note" id="checklistNote"></p>
+        <div id="checklistGroups"></div>
+        <div id="checklistResult" class="checklist-result hidden"></div>
+      </div>
+
+      <div class="card hidden" id="similarCard">
+        <div class="card-head">
+          <h2>Similar approved cases <span class="zh-inline">相似已确认案例</span></h2>
+          <span class="card-sub">From case library, by keyword similarity <span class="zh-inline">来自案例库，按关键词相似度</span></span>
+        </div>
+        <div id="similarList"></div>
+        <p class="similar-hint">Tip: the more cases your team confirms, the more reliable these references become. <span class="zh-inline">提示：团队确认的案例越多，这里的参考越可靠。</span></p>
+      </div>
+
+    </section>
+
+    <!-- ============ Tab: Standards ============ -->
+    <section id="tab-standards" class="tab-panel hidden">
+      <div class="card standards-panel">
+        <h2>Assess by Severity Definition <span class="zh-inline">依据严重度定义判断</span></h2>
+        <div id="severityCards"></div>
+        <div id="symptomsSection"></div>
+      </div>
+      <div class="card">
+        <h2>Document-integrated criteria <span class="zh-inline">文档整合标准</span></h2>
+        <p class="card-sub">From P0207713 / P0207715 / P0207624 — the upstream sources of the S1 criteria <span class="zh-inline">来自 P0207713 / P0207715 / P0207624 —— 工具 S1 标准的上游法源</span></p>
+        <div id="docCriteriaSection"></div>
+      </div>
+    </section>
+
+    <!-- ============ Tab: Case Library ============ -->
+    <section id="tab-cases" class="tab-panel hidden">
+      <div class="card">
+        <div class="cases-toolbar">
+          <span id="syncBadge" class="sync-badge offline" title="Case library sync status / 案例库同步状态">
+            <span class="sync-dot"></span><span class="sync-text">Offline 本地</span>
+          </span>
+          <input type="search" id="caseSearch" placeholder="Search title / description / category / entered by / notes... 搜索标题/描述/类别/填写人/备注" />
+          <div class="toolbar-btns">
+            <button id="syncBtn" class="btn btn-secondary btn-sm" title="Reload shared library from server / 从服务器重新加载共享案例库">Sync <span class="zh-inline">同步</span></button>
+            <button id="exportCasesBtn" class="btn btn-secondary btn-sm">Export <span class="zh-inline">导出</span></button>
+            <button id="importCasesBtn" class="btn btn-secondary btn-sm">Import <span class="zh-inline">导入</span></button>
+            <input type="file" id="importCasesFile" accept=".json,application/json" hidden />
+            <button id="addCaseBtn" class="btn btn-primary btn-sm">+ Add case <span class="zh-inline">新增案例</span></button>
+          </div>
+        </div>
+        <div id="caseStats" class="case-stats"></div>
+        <div id="caseList" class="case-list"></div>
+        <p id="caseEmpty" class="empty-note hidden">
+          No approved cases yet. Add your first team-confirmed case to start building the reference library.
+          <span class="zh-inline">暂无案例。录入第一个团队已确认严重度的案例，开始积累参考库。</span>
+        </p>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <p class="meta">Last updated <span class="zh-inline">最后更新</span>: <span id="lastUpdated"></span></p>
+      <p class="copyright">版权所有，Aumovio SAM CN Quality</p>
+    </footer>
+  </div>
+
+  <!-- ============ Case modal ============ -->
+  <div id="caseModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="caseModalTitle">Add case <span class="zh-inline">新增案例</span></h3>
+      <form id="caseForm" autocomplete="off">
+        <input type="hidden" id="caseId" />
+        <div class="trans-bar">
+          <button type="button" id="caseTranslateBtn" class="btn btn-secondary btn-sm">Auto-translate <span class="zh-inline">自动翻译</span></button>
+          <span id="caseTransStatus" class="trans-status"></span>
+        </div>
+
+        <label for="caseDescriptionEn">Description (EN) <span class="zh-inline">问题描述（英文）</span> *</label>
+        <textarea id="caseDescriptionEn" required placeholder="Customer's original problem description"></textarea>
+
+        <label for="caseDescriptionZh">Description (ZH) <span class="zh-inline">问题描述（中文）</span> *</label>
+        <textarea id="caseDescriptionZh" required placeholder="客户原始问题描述"></textarea>
+
+        <div class="form-row">
+          <div>
+            <label for="caseCategory">Category <span class="zh-inline">类别</span></label>
+            <select id="caseCategory"></select>
+          </div>
+          <div>
+            <label for="caseSeverity">Severity (team-approved) <span class="zh-inline">严重度（团队确认）</span> *</label>
+            <select id="caseSeverity" required>
+              <option value="1">S1 — Technical Compliance &amp; Safety Risk 技术合规与安全风险</option>
+              <option value="2">S2 — Customer / Source-ability / Certification 客户/可采购性/认证</option>
+              <option value="3">S3 — Operational Disruption 生产中断</option>
+              <option value="4">S4 — Minor &amp; Isolated 轻微及孤立</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label for="caseEnteredBy">Entered by <span class="zh-inline">填写人</span></label>
+            <input type="text" id="caseEnteredBy" placeholder="Name / 姓名" />
+          </div>
+          <div>
+            <label for="caseApprovedBy">Approved by <span class="zh-inline">团队确认信息</span></label>
+            <input type="text" id="caseApprovedBy" />
+          </div>
+          <div>
+            <label for="caseDate">Date <span class="zh-inline">日期</span></label>
+            <input type="date" id="caseDate" />
+          </div>
+          <div>
+            <label for="caseStatus">Status <span class="zh-inline">状态</span></label>
+            <select id="caseStatus">
+              <option value="open">Open 处理中</option>
+              <option value="closed">Closed 已关闭</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="caseNotesEn">Notes (EN) <span class="zh-inline">备注（英文）</span></label>
+        <textarea id="caseNotesEn" rows="2" placeholder="Optional"></textarea>
+
+        <label for="caseNotesZh">Notes (ZH) <span class="zh-inline">备注（中文）</span></label>
+        <textarea id="caseNotesZh" rows="2" placeholder="可选"></textarea>
+
+        <div class="modal-actions">
+          <button type="button" id="caseCancelBtn" class="btn btn-secondary">Cancel <span class="zh-inline">取消</span></button>
+          <button type="submit" class="btn btn-primary">Save <span class="zh-inline">保存</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js?v=20260831-3"></script>
+  <script src="js/store.js?v=20260831-3"></script>
+  <script src="js/data.js?v=20260831-3"></script>
+  <script src="js/app.js?v=20260831-3"></script>
+</body>
+</html>
