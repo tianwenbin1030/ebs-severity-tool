@@ -168,7 +168,6 @@ if (typeof document !== 'undefined') {
       var h = [];
 
       h.push('<div class="doc-block">' +
-        '<h4>Five tC categories <span class="zh-inline">' + escapeHtml('\u4e94\u4e2a\u6280\u672f\u5408\u89c4\u7c7b\u522b') + '</span></h4>' +
         '<div class="doc-table">' +
           '<div class="doc-row doc-row-head"><span>Category <span class="zh-inline">' + escapeHtml('\u7c7b\u522b') + '</span></span><span>Aspects <span class="zh-inline">' + escapeHtml('\u65b9\u9762') + '</span></span></div>' +
           D.categories.map(function(c) {
