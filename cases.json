@@ -1,4 +1,21 @@
 {
   "version": 1,
-  "cases": []
+  "cases": [
+    {
+      "id": "e2e-1788148446248",
+      "title": {
+        "en": "E2E sync test",
+        "zh": "端到端同步测试"
+      },
+      "description": {
+        "en": "added via store.js against real GitHub API",
+        "zh": "通过 store.js 对真实 GitHub API 写入"
+      },
+      "category": "other",
+      "severity": 4,
+      "date": "2026-08-31",
+      "status": "open",
+      "enteredBy": "e2e-verify"
+    }
+  ]
 }
